@@ -1,7 +1,7 @@
 use_frameworks!
 
 target 'CocoapodsExample' do
-  pod 'Analytics', :path => '../../'
+  pod 'Analytics@Practo', :path => '../../'
 end
 
 
