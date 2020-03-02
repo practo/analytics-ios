@@ -115,7 +115,6 @@
 				EADEB9161DED460A005322DA /* Frameworks */,
 				EADEB9171DED460A005322DA /* Resources */,
 				29A9CC64339681809F2A93F1 /* [CP] Embed Pods Frameworks */,
-				5E9EED2DB8900F15E25C6735 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -197,31 +196,16 @@
 			files = (
 			);
 			inputPaths = (
-				"${SRCROOT}/Pods/Target Support Files/Pods-CocoapodsExample/Pods-CocoapodsExample-frameworks.sh",
-				"${BUILT_PRODUCTS_DIR}/Analytics/Analytics.framework",
+				"${PODS_ROOT}/Target Support Files/Pods-CocoapodsExample/Pods-CocoapodsExample-frameworks.sh",
+				"${BUILT_PRODUCTS_DIR}/Analytics@Practo/Analytics_Practo.framework",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Analytics.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/Analytics_Practo.framework",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-CocoapodsExample/Pods-CocoapodsExample-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		5E9EED2DB8900F15E25C6735 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "[CP] Copy Pods Resources";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${SRCROOT}/Pods/Target Support Files/Pods-CocoapodsExample/Pods-CocoapodsExample-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CocoapodsExample/Pods-CocoapodsExample-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
