@@ -153,7 +153,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
 
     dict[@"library"] = @{
-        @"name" : @"analytics-ios",
+        @"name" : @"analytics@practo-ios",
         @"version" : [SEGAnalytics version]
     };
 
@@ -478,7 +478,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
         }
         [payload setValue:[self.analytics getAnonymousId] forKey:@"anonymousId"];
 
-        [payload setValue:[self integrationsDictionary:integrations] forKey:@"integrations"];
+//        [payload setValue:[self integrationsDictionary:integrations] forKey:@"integrations"]; //Not required since we do not want this info in PEL
 
         NSDictionary *staticContext = self.cachedStaticContext;
         NSDictionary *liveContext = [self liveContext];
