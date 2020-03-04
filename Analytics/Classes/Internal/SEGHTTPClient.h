@@ -10,6 +10,8 @@
 #define SEGMENT_CDN_BASE [NSURL URLWithString:@"https://cdn-settings.segment.com/v1"]
 #define MOBILE_SERVICE_BASE [NSURL URLWithString:@"https://mobile-service.segment.com/v1"]
 
+#define PEL_API_BASE [NSURL URLWithString:@"https://events.practo.com/v1"]
+
 NS_ASSUME_NONNULL_BEGIN
 
 
