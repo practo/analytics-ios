@@ -49,7 +49,7 @@
             @"Content-Encoding" : @"gzip",
             @"Content-Type" : @"application/json",
             @"Authorization" : [@"Basic " stringByAppendingString:[[self class] authorizationHeader:writeKey]],
-            @"User-Agent" : [NSString stringWithFormat:@"analytics-ios/%@", [SEGAnalytics version]],
+            @"User-Agent" : [NSString stringWithFormat:@"analytics@practo-ios/%@", [SEGAnalytics version]],
         };
         session = [NSURLSession sessionWithConfiguration:config delegate:self.httpSessionDelegate delegateQueue:NULL];
         self.sessionsByWriteKey[writeKey] = session;
@@ -71,7 +71,7 @@
     //    batch = SEGCoerceDictionary(batch);
     NSURLSession *session = [self sessionForWriteKey:writeKey];
 
-    NSURL *url = [SEGMENT_API_BASE URLByAppendingPathComponent:@"batch"];
+    NSURL *url = [PEL_API_BASE URLByAppendingPathComponent:@"events"];
     NSMutableURLRequest *request = self.requestFactory(url);
 
     // This is a workaround for an IOS 8.3 bug that causes Content-Type to be incorrectly set
