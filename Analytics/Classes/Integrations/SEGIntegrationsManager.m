@@ -17,18 +17,18 @@
 #import "SEGFileStorage.h"
 #import "SEGUserDefaultsStorage.h"
 #import "SEGIntegrationsManager.h"
-#import "SEGSegmentIntegrationFactory.h"
 #import "SEGPayload.h"
 #import "SEGIdentifyPayload.h"
 #import "SEGTrackPayload.h"
 #import "SEGGroupPayload.h"
 #import "SEGScreenPayload.h"
 #import "SEGAliasPayload.h"
+#import "SEGPELIntegrationFactory.h"
 
-NSString *SEGAnalyticsIntegrationDidStart = @"io.segment.analytics.integration.did.start";
+NSString *SEGAnalyticsIntegrationDidStart = @"io.segment.pel-analytics.integration.did.start";
 static NSString *const SEGAnonymousIdKey = @"SEGAnonymousId";
 static NSString *const kSEGAnonymousIdFilename = @"segment.anonymousId";
-static NSString *const SEGCachedSettingsKey = @"analytics.settings.v2.plist";
+static NSString *const SEGCachedSettingsKey = @"pel-analytics.settings.v2.plist";
 
 
 @interface SEGAnalyticsConfiguration (Private)
@@ -36,7 +36,6 @@ static NSString *const SEGCachedSettingsKey = @"analytics.settings.v2.plist";
 @property (nonatomic, strong) NSArray *factories;
 
 @end
-
 
 @interface SEGIntegrationsManager ()
 
@@ -83,7 +82,8 @@ static NSString *const SEGCachedSettingsKey = @"analytics.settings.v2.plist";
 
         self.cachedAnonymousId = [self loadOrGenerateAnonymousID:NO];
         NSMutableArray *factories = [[configuration factories] mutableCopy];
-        [factories addObject:[[SEGSegmentIntegrationFactory alloc] initWithHTTPClient:self.httpClient fileStorage:self.fileStorage userDefaultsStorage:self.userDefaultsStorage]];
+        [factories addObject:[[SEGPELIntegrationFactory alloc] initWithHTTPClient:self.httpClient fileStorage:self.fileStorage userDefaultsStorage:self.userDefaultsStorage]];
+
         self.factories = [factories copy];
         self.integrations = [NSMutableDictionary dictionaryWithCapacity:factories.count];
         self.registeredIntegrations = [NSMutableDictionary dictionaryWithCapacity:factories.count];
@@ -384,42 +384,42 @@ static NSString *const SEGCachedSettingsKey = @"analytics.settings.v2.plist";
 
 - (void)refreshSettings
 {
-    seg_dispatch_specific_async(_serialQueue, ^{
-        if (self.settingsRequest) {
-            return;
-        }
-
-        self.settingsRequest = [self.httpClient settingsForWriteKey:self.configuration.writeKey completionHandler:^(BOOL success, NSDictionary *settings) {
-            seg_dispatch_specific_async(self -> _serialQueue, ^{
-                if (success) {
-                    [self setCachedSettings:settings];
-                } else {
+//    seg_dispatch_specific_async(_serialQueue, ^{
+//        if (self.settingsRequest) {
+//            return;
+//        }
+//
+//        self.settingsRequest = [self.httpClient settingsForWriteKey:self.configuration.writeKey completionHandler:^(BOOL success, NSDictionary *settings) {
+//            seg_dispatch_specific_async(self -> _serialQueue, ^{
+//                if (success) {
+//                    [self setCachedSettings:settings];
+//                } else {
                     NSDictionary *previouslyCachedSettings = [self cachedSettings];
-                    if (previouslyCachedSettings) {
+                    if (previouslyCachedSettings && previouslyCachedSettings.allKeys.count > 0) {
                         [self setCachedSettings:previouslyCachedSettings];
                     } else {
                         // If settings request fail, fall back to using just Segment integration.
                         // Doesn't address situations where this callback never gets called (though we don't expect that to ever happen).
                         [self setCachedSettings:@{
                             @"integrations" : @{
-                                @"Segment.io" : @{@"apiKey" : self.configuration.writeKey},
+                                @"PEL" : @{@"apiKey" : self.configuration.writeKey},
                             },
                             @"plan" : @{@"track" : @{}}
                         }];
                     }
-                }
-                self.settingsRequest = nil;
-            });
-        }];
-    });
+//                }
+//                self.settingsRequest = nil;
+//            });
+//        }];
+//    });
 }
 
 #pragma mark - Private
 
 + (BOOL)isIntegration:(NSString *)key enabledInOptions:(NSDictionary *)options
 {
-    // If the event is in the tracking plan, it should always be sent to api.segment.io.
-    if ([@"Segment.io" isEqualToString:key]) {
+    // If the event is in the tracking plan, it should always be sent to practo events pipeline.
+    if ([@"PEL" isEqualToString:key]) {
         return YES;
     }
     if (options[key]) {
@@ -448,8 +448,8 @@ static NSString *const SEGCachedSettingsKey = @"analytics.settings.v2.plist";
 
 + (BOOL)isTrackEvent:(NSString *)event enabledForIntegration:(NSString *)key inPlan:(NSDictionary *)plan
 {
-    // Whether the event is enabled or disabled, it should always be sent to api.segment.io.
-    if ([key isEqualToString:@"Segment.io"]) {
+    // Whether the event is enabled or disabled, it should always be sent to practo events pipeline
+    if ([key isEqualToString:@"PEL"]) {
         return YES;
     }
 
