@@ -6,7 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
-#import <SEGIntegrationFactory.h>
+#import "SEGIntegrationFactory.h"
 #import "SEGHTTPClient.h"
 #import "SEGStorage.h"
 
