@@ -24,16 +24,16 @@ NSString *const SEGSegmentPELDidSendRequestNotification = @"SegmentPELDidSendReq
 NSString *const SEGSegmentPELRequestDidSucceedNotification = @"SegmentPELRequestDidSucceed";
 NSString *const SEGSegmentPELRequestDidFailNotification = @"SegmentPELRequestDidFail";
 
-NSString *const SEGPELAdvertisingClassIdentifier = @"PELASIdentifierManager";
-NSString *const SEGPELADClientClass = @"PELADClient";
+NSString *const SEGPELAdvertisingClassIdentifier = @"ASIdentifierManager";
+NSString *const SEGPELADClientClass = @"ADClient";
 
 NSString *const SEGPELUserIdKey = @"SEGPELUserId";
 NSString *const SEGPELQueueKey = @"SEGPELQueue";
 NSString *const SEGPELTraitsKey = @"SEGPELTraits";
 
-NSString *const kSEGPELUserIdFilename = @"segmentiopel.userId";
-NSString *const kSEGPELQueueFilename = @"segmentiopel.queue.plist";
-NSString *const kSEGPELTraitsFilename = @"segmentiopel.traits.plist";
+NSString *const kSEGPELUserIdFilename = @"segmentio.pel.userId";
+NSString *const kSEGPELQueueFilename = @"segmentio.pel.queue.plist";
+NSString *const kSEGPELTraitsFilename = @"segmentio.pel.traits.plist";
 
 static NSString *GetDeviceModel()
 {
@@ -97,8 +97,8 @@ static BOOL GetAdTrackingEnabled()
         self.reachability = [SEGReachability reachabilityWithHostname:@"google.com"];
         [self.reachability startNotifier];
         self.cachedStaticContext = [self staticContext];
-        self.serialQueue = seg_dispatch_queue_create_specific("practo.segment.analytics.segmentpelio", DISPATCH_QUEUE_SERIAL);
-        self.backgroundTaskQueue = seg_dispatch_queue_create_specific("practo.segment.analytics.backgroundTask", DISPATCH_QUEUE_SERIAL);
+        self.serialQueue = seg_dispatch_queue_create_specific("io.segment.analytics.segmentio.pel", DISPATCH_QUEUE_SERIAL);
+        self.backgroundTaskQueue = seg_dispatch_queue_create_specific("io.segment.analytics.pel.backgroundTask", DISPATCH_QUEUE_SERIAL);
         self.flushTaskID = UIBackgroundTaskInvalid;
 
         [self dispatchBackground:^{

@@ -59,7 +59,7 @@
 }
 
 - (NSString *)pipelineTokenFrom:(NSString *)key {
-    NSString *keyToHash = @"events-pipeline" + key;
+    NSString *keyToHash = [@"events-pipeline" stringByAppendingString:key];
     const char *str = keyToHash.UTF8String;
     if (str == NULL) {
         str = "";
@@ -71,7 +71,7 @@
                            result[4], result[5], result[6], result[7],
                            result[8], result[9], result[10], result[11],
                            result[12], result[13], result[14], result[15]];
-    return keyHash
+    return keyHash;
 }
 
 - (NSString *)authPrefixFrom:(NSString *)key {
