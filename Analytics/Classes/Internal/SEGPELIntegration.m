@@ -381,8 +381,8 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 - (void)track:(SEGTrackPayload *)payload
 {
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
-    [dictionary setValue:payload.event forKey:@"event"];
-    [dictionary setValue:payload.properties forKey:@"properties"];
+    [dictionary setValue:payload.event forKey:@"eventName"];
+    [dictionary setValue:payload.properties forKey:@"payload"];
     [self enqueueAction:@"track" dictionary:dictionary context:payload.context integrations:payload.integrations];
 }
 
@@ -390,7 +390,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 {
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
     [dictionary setValue:payload.name forKey:@"name"];
-    [dictionary setValue:payload.properties forKey:@"properties"];
+    [dictionary setValue:payload.properties forKey:@"payload"];
 
     [self enqueueAction:@"screen" dictionary:dictionary context:payload.context integrations:payload.integrations];
 }
@@ -464,8 +464,17 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 {
     // attach these parts of the payload outside since they are all synchronous
     // and the timestamp will be more accurate.
-    payload[@"type"] = action;
-    payload[@"timestamp"] = iso8601FormattedString([NSDate date]);
+    NSString * eventName = payload[@"eventName"];
+    NSMutableDictionary *payloadDict = [payload[@"payload"] mutableCopy];
+    if (payloadDict != nil) {
+        payloadDict[@"timestamp"] = iso8601FormattedString([NSDate date]);
+        if (eventName == nil) {
+            eventName = [NSString stringWithFormat:@"%@ %@", payload[@"Object"], payload[@"Action"]];
+            payload[@"eventName"] = eventName;
+        }
+        payload[@"payload"] = payloadDict;
+    }
+
     payload[@"messageId"] = GenerateUUIDString();
 
     [self dispatchBackground:^{
