@@ -75,7 +75,10 @@
 }
 
 - (NSString *)authPrefixFrom:(NSString *)key {
-    return [key substringToIndex:8];
+    if (key != nil && key.length > 8) {
+        return [key substringToIndex:8];
+    }
+    return @"";
 }
 
 - (void)dealloc
