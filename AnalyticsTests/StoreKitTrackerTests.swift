@@ -10,7 +10,7 @@ import Quick
 import Nimble
 import Analytics
 
-class mockTransaction: SKPaymentTransaction {
+class MockTransaction: SKPaymentTransaction {
   override var transactionIdentifier: String? {
     return "tid"
   }
@@ -22,18 +22,18 @@ class mockTransaction: SKPaymentTransaction {
   }
 }
 
-class mockPayment: SKPayment {
+class MockPayment: SKPayment {
   override var productIdentifier: String { return "pid" }
 }
 
-class mockProduct: SKProduct {
+class MockProduct: SKProduct {
   override var productIdentifier: String { return "pid" }
   override var price: NSDecimalNumber { return 3 }
   override var localizedTitle: String { return "lt" }
 
 }
 
-class mockProductResponse: SKProductsResponse {
+class MockProductResponse: SKProductsResponse {
   override var products: [SKProduct] {
     return [mockProduct()]
   }
