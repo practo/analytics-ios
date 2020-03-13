@@ -368,7 +368,9 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 - (void)identify:(SEGIdentifyPayload *)payload
 {
     [self dispatchBackground:^{
-        [self saveUserId:payload.userId];
+        if (payload.userId != nil) {
+            [self saveUserId:payload.userId];
+        }
         [self addTraits:payload.traits];
     }];
 
