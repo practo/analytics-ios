@@ -113,9 +113,9 @@ static BOOL GetAdTrackingEnabled()
             }
 #endif
         }];
-        [self dispatchBackground:^{
-            [self trackAttributionData:self.configuration.trackAttributionData];
-        }];
+//        [self dispatchBackground:^{
+//            [self trackAttributionData:self.configuration.trackAttributionData];
+//        }];
 
         self.flushTimer = [NSTimer timerWithTimeInterval:self.configuration.flushInterval
                                                   target:self
@@ -593,7 +593,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
     SEGLog(@"%@ Flushing %lu of %lu queued API calls.", self, (unsigned long)batch.count, (unsigned long)self.queue.count);
     SEGLog(@"Flushing batch %@.", payload);
 
-    self.batchRequest = [self.httpClient upload:payload forWriteKey:self.configuration.writeKey completionHandler:^(BOOL retry) {
+    self.batchRequest = [self.httpClient upload:payload forWriteKey:[[[SEGAnalytics sharedAnalytics] configuration] getAuthToken] completionHandler:^(BOOL retry) {
         [self dispatchBackground:^{
             if (retry) {
                 [self notifyForName:SEGSegmentPELRequestDidFailNotification userInfo:batch];
@@ -692,7 +692,7 @@ NSString *const SEGPELTrackedAttributionKey = @"SEGPELTrackedAttributionKey";
     [context addEntriesFromDictionary:staticContext];
     [context addEntriesFromDictionary:liveContext];
 
-    self.attributionRequest = [self.httpClient attributionWithWriteKey:self.configuration.writeKey forDevice:[context copy] completionHandler:^(BOOL success, NSDictionary *properties) {
+    self.attributionRequest = [self.httpClient attributionWithWriteKey:[[[SEGAnalytics sharedAnalytics] configuration] getAuthToken] forDevice:[context copy] completionHandler:^(BOOL success, NSDictionary *properties) {
         [self dispatchBackground:^{
             if (success) {
                 [self.analytics track:@"Install Attributed" properties:properties];
