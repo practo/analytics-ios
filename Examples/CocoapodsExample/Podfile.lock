@@ -1,16 +1,16 @@
 PODS:
-  - Analytics (3.6.9)
+  - "Analytics@Practo (3.8.0-beta.1)"
 
 DEPENDENCIES:
-  - Analytics (from `../../`)
+  - "Analytics@Practo (from `../../`)"
 
 EXTERNAL SOURCES:
-  Analytics:
-    :path: ../../
+  "Analytics@Practo":
+    :path: "../../"
 
 SPEC CHECKSUMS:
-  Analytics: 6541ce337e99d9f7a2240a8b3953940a7be5f998
+  "Analytics@Practo": b2b8da407ad0dccc3246267015b01c25082a5a04
 
-PODFILE CHECKSUM: 20b258e875ed60a69591787e49bdc3ca9f7c4ad3
+PODFILE CHECKSUM: ea77c8611691b8132b9d1fa0120232be1edafa49
 
-COCOAPODS: 1.3.1
+COCOAPODS: 1.8.4

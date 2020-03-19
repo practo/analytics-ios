@@ -1,9 +1,15 @@
+//
+//  SEGPELIntegration.m
+//  Analytics
+//
+//  Created by Sumeet on 25/02/20.
+//
 #include <sys/sysctl.h>
 
 #import <UIKit/UIKit.h>
 #import "SEGAnalytics.h"
 #import "SEGAnalyticsUtils.h"
-#import "SEGSegmentIntegration.h"
+#import "SEGPELIntegration.h"
 #import "SEGReachability.h"
 #import "SEGHTTPClient.h"
 #import "SEGStorage.h"
@@ -14,20 +20,20 @@
 #import <CoreTelephony/CTTelephonyNetworkInfo.h>
 #endif
 
-NSString *const SEGSegmentDidSendRequestNotification = @"SegmentDidSendRequest";
-NSString *const SEGSegmentRequestDidSucceedNotification = @"SegmentRequestDidSucceed";
-NSString *const SEGSegmentRequestDidFailNotification = @"SegmentRequestDidFail";
+NSString *const SEGSegmentPELDidSendRequestNotification = @"SegmentPELDidSendRequest";
+NSString *const SEGSegmentPELRequestDidSucceedNotification = @"SegmentPELRequestDidSucceed";
+NSString *const SEGSegmentPELRequestDidFailNotification = @"SegmentPELRequestDidFail";
 
-NSString *const SEGAdvertisingClassIdentifier = @"ASIdentifierManager";
-NSString *const SEGADClientClass = @"ADClient";
+NSString *const SEGPELAdvertisingClassIdentifier = @"ASIdentifierManager";
+NSString *const SEGPELADClientClass = @"ADClient";
 
-NSString *const SEGUserIdKey = @"SEGUserId";
-NSString *const SEGQueueKey = @"SEGQueue";
-NSString *const SEGTraitsKey = @"SEGTraits";
+NSString *const SEGPELUserIdKey = @"SEGPELUserId";
+NSString *const SEGPELQueueKey = @"SEGPELQueue";
+NSString *const SEGPELTraitsKey = @"SEGPELTraits";
 
-NSString *const kSEGUserIdFilename = @"segmentio.userId";
-NSString *const kSEGQueueFilename = @"segmentio.queue.plist";
-NSString *const kSEGTraitsFilename = @"segmentio.traits.plist";
+NSString *const kSEGPELUserIdFilename = @"segmentio.pel.userId";
+NSString *const kSEGPELQueueFilename = @"segmentio.pel.queue.plist";
+NSString *const kSEGPELTraitsFilename = @"segmentio.pel.traits.plist";
 
 static NSString *GetDeviceModel()
 {
@@ -42,7 +48,7 @@ static NSString *GetDeviceModel()
 static BOOL GetAdTrackingEnabled()
 {
     BOOL result = NO;
-    Class advertisingManager = NSClassFromString(SEGAdvertisingClassIdentifier);
+    Class advertisingManager = NSClassFromString(SEGPELAdvertisingClassIdentifier);
     SEL sharedManagerSelector = NSSelectorFromString(@"sharedManager");
     id sharedManager = ((id (*)(id, SEL))[advertisingManager methodForSelector:sharedManagerSelector])(advertisingManager, sharedManagerSelector);
     SEL adTrackingEnabledSEL = NSSelectorFromString(@"isAdvertisingTrackingEnabled");
@@ -51,7 +57,7 @@ static BOOL GetAdTrackingEnabled()
 }
 
 
-@interface SEGSegmentIntegration ()
+@interface SEGPELIntegration ()
 
 @property (nonatomic, strong) NSMutableArray *queue;
 @property (nonatomic, strong) NSDictionary *_cachedStaticContext;
@@ -75,7 +81,7 @@ static BOOL GetAdTrackingEnabled()
 @end
 
 
-@implementation SEGSegmentIntegration
+@implementation SEGPELIntegration
 
 - (id)initWithAnalytics:(SEGAnalytics *)analytics httpClient:(SEGHTTPClient *)httpClient fileStorage:(id<SEGStorage>)fileStorage userDefaultsStorage:(id<SEGStorage>)userDefaultsStorage;
 {
@@ -91,25 +97,25 @@ static BOOL GetAdTrackingEnabled()
         self.reachability = [SEGReachability reachabilityWithHostname:@"google.com"];
         [self.reachability startNotifier];
         self.cachedStaticContext = [self staticContext];
-        self.serialQueue = seg_dispatch_queue_create_specific("io.segment.analytics.segmentio", DISPATCH_QUEUE_SERIAL);
-        self.backgroundTaskQueue = seg_dispatch_queue_create_specific("io.segment.analytics.backgroundTask", DISPATCH_QUEUE_SERIAL);
+        self.serialQueue = seg_dispatch_queue_create_specific("io.segment.analytics.segmentio.pel", DISPATCH_QUEUE_SERIAL);
+        self.backgroundTaskQueue = seg_dispatch_queue_create_specific("io.segment.analytics.pel.backgroundTask", DISPATCH_QUEUE_SERIAL);
         self.flushTaskID = UIBackgroundTaskInvalid;
 
         [self dispatchBackground:^{
             // Check for previous queue data in NSUserDefaults and remove if present.
-            if ([[NSUserDefaults standardUserDefaults] objectForKey:SEGQueueKey]) {
-                [[NSUserDefaults standardUserDefaults] removeObjectForKey:SEGQueueKey];
+            if ([[NSUserDefaults standardUserDefaults] objectForKey:SEGPELQueueKey]) {
+                [[NSUserDefaults standardUserDefaults] removeObjectForKey:SEGPELQueueKey];
             }
 #if !TARGET_OS_TV
             // Check for previous track data in NSUserDefaults and remove if present (Traits still exist in NSUserDefaults on tvOS)
-            if ([[NSUserDefaults standardUserDefaults] objectForKey:SEGTraitsKey]) {
-                [[NSUserDefaults standardUserDefaults] removeObjectForKey:SEGTraitsKey];
+            if ([[NSUserDefaults standardUserDefaults] objectForKey:SEGPELTraitsKey]) {
+                [[NSUserDefaults standardUserDefaults] removeObjectForKey:SEGPELTraitsKey];
             }
 #endif
         }];
-        [self dispatchBackground:^{
-            [self trackAttributionData:self.configuration.trackAttributionData];
-        }];
+//        [self dispatchBackground:^{
+//            [self trackAttributionData:self.configuration.trackAttributionData];
+//        }];
 
         self.flushTimer = [NSTimer timerWithTimeInterval:self.configuration.flushInterval
                                                   target:self
@@ -147,7 +153,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
     NSMutableDictionary *dict = [[NSMutableDictionary alloc] init];
 
     dict[@"library"] = @{
-        @"name" : @"analytics-ios",
+        @"name" : @"analytics@practo-ios",
         @"version" : [SEGAnalytics version]
     };
 
@@ -171,7 +177,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
         dict[@"model"] = GetDeviceModel();
         dict[@"id"] = [[device identifierForVendor] UUIDString];
         dict[@"name"] = [device model];
-        if (NSClassFromString(SEGAdvertisingClassIdentifier)) {
+        if (NSClassFromString(SEGPELAdvertisingClassIdentifier)) {
             dict[@"adTrackingEnabled"] = @(GetAdTrackingEnabled());
         }
         if (self.configuration.enableAdvertisingTracking) {
@@ -193,7 +199,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
     };
 
 #if !(TARGET_IPHONE_SIMULATOR)
-    Class adClient = NSClassFromString(SEGADClientClass);
+    Class adClient = NSClassFromString(SEGPELADClientClass);
     if (adClient) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
@@ -299,7 +305,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
     seg_dispatch_specific_sync(_backgroundTaskQueue, ^{
         id<SEGApplicationProtocol> application = [self.analytics configuration].application;
         if (application) {
-            self.flushTaskID = [application seg_beginBackgroundTaskWithName:@"Segmentio.Flush"
+            self.flushTaskID = [application seg_beginBackgroundTaskWithName:@"SegmentioPEL.Flush"
                                                           expirationHandler:^{
                                                               [self endBackgroundTask];
                                                           }];
@@ -337,9 +343,9 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
         self.userId = userId;
 
 #if TARGET_OS_TV
-        [self.userDefaultsStorage setString:userId forKey:SEGUserIdKey];
+        [self.userDefaultsStorage setString:userId forKey:SEGPELUserIdKey];
 #else
-        [self.fileStorage setString:userId forKey:kSEGUserIdFilename];
+        [self.fileStorage setString:userId forKey:kSEGPELUserIdFilename];
 #endif
     }];
 }
@@ -350,9 +356,9 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
         [self.traits addEntriesFromDictionary:traits];
 
 #if TARGET_OS_TV
-        [self.userDefaultsStorage setDictionary:[self.traits copy] forKey:SEGTraitsKey];
+        [self.userDefaultsStorage setDictionary:[self.traits copy] forKey:SEGPELTraitsKey];
 #else
-        [self.fileStorage setDictionary:[self.traits copy] forKey:kSEGTraitsFilename];
+        [self.fileStorage setDictionary:[self.traits copy] forKey:kSEGPELTraitsFilename];
 #endif
     }];
 }
@@ -362,7 +368,9 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 - (void)identify:(SEGIdentifyPayload *)payload
 {
     [self dispatchBackground:^{
-        [self saveUserId:payload.userId];
+        if (payload.userId != nil) {
+            [self saveUserId:payload.userId];
+        }
         [self addTraits:payload.traits];
     }];
 
@@ -375,8 +383,8 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 - (void)track:(SEGTrackPayload *)payload
 {
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
-    [dictionary setValue:payload.event forKey:@"event"];
-    [dictionary setValue:payload.properties forKey:@"properties"];
+    [dictionary setValue:payload.event forKey:@"eventName"];
+    [dictionary setValue:payload.properties forKey:@"payload"];
     [self enqueueAction:@"track" dictionary:dictionary context:payload.context integrations:payload.integrations];
 }
 
@@ -384,7 +392,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 {
     NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
     [dictionary setValue:payload.name forKey:@"name"];
-    [dictionary setValue:payload.properties forKey:@"properties"];
+    [dictionary setValue:payload.properties forKey:@"payload"];
 
     [self enqueueAction:@"screen" dictionary:dictionary context:payload.context integrations:payload.integrations];
 }
@@ -445,8 +453,8 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 {
     NSMutableDictionary *dict = [integrations ?: @{} mutableCopy];
     for (NSString *integration in self.analytics.bundledIntegrations) {
-        // Don't record Segment.io in the dictionary. It is always enabled.
-        if ([integration isEqualToString:@"PEL"]) {
+        // Don't record SegmentPEL.io in the dictionary. It is always enabled.
+        if ([integration isEqualToString:@"SegmentPEL.io"]) {
             continue;
         }
         dict[integration] = @NO;
@@ -458,8 +466,17 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 {
     // attach these parts of the payload outside since they are all synchronous
     // and the timestamp will be more accurate.
-    payload[@"type"] = action;
-    payload[@"timestamp"] = iso8601FormattedString([NSDate date]);
+    NSString * eventName = payload[@"eventName"];
+    NSMutableDictionary *payloadDict = [payload[@"payload"] mutableCopy];
+    if (payloadDict != nil) {
+        payloadDict[@"timestamp"] = iso8601FormattedString([NSDate date]);
+        if (eventName == nil) {
+            eventName = [NSString stringWithFormat:@"%@ %@", payload[@"Object"], payload[@"Action"]];
+            payload[@"eventName"] = eventName;
+        }
+        payload[@"payload"] = payloadDict;
+    }
+
     payload[@"messageId"] = GenerateUUIDString();
 
     [self dispatchBackground:^{
@@ -472,7 +489,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
         }
         [payload setValue:[self.analytics getAnonymousId] forKey:@"anonymousId"];
 
-        [payload setValue:[self integrationsDictionary:integrations] forKey:@"integrations"];
+//        [payload setValue:[self integrationsDictionary:integrations] forKey:@"integrations"]; //Not required since we do not want this info in PEL
 
         NSDictionary *staticContext = self.cachedStaticContext;
         NSDictionary *liveContext = [self liveContext];
@@ -546,11 +563,11 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 {
     [self dispatchBackgroundAndWait:^{
 #if TARGET_OS_TV
-        [self.userDefaultsStorage removeKey:SEGUserIdKey];
-        [self.userDefaultsStorage removeKey:SEGTraitsKey];
+        [self.userDefaultsStorage removeKey:SEGPELUserIdKey];
+        [self.userDefaultsStorage removeKey:SEGPELTraitsKey];
 #else
-        [self.fileStorage removeKey:kSEGUserIdFilename];
-        [self.fileStorage removeKey:kSEGTraitsFilename];
+        [self.fileStorage removeKey:kSEGPELUserIdFilename];
+        [self.fileStorage removeKey:kSEGPELTraitsFilename];
 #endif
         self.userId = nil;
         self.traits = [NSMutableDictionary dictionary];
@@ -561,7 +578,9 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 {
     dispatch_async(dispatch_get_main_queue(), ^{
         [[NSNotificationCenter defaultCenter] postNotificationName:name object:userInfo];
-        SEGLog(@"sent notification %@", name);
+//        if (SEGSegmentPELRequestDidSucceedNotification == name) {
+//            SEGLog(@"++++++++ sent notification %@, userInfo: %@", name, userInfo);
+//        }
     });
 }
 
@@ -569,15 +588,15 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 {
     NSMutableDictionary *payload = [[NSMutableDictionary alloc] init];
     [payload setObject:iso8601FormattedString([NSDate date]) forKey:@"sentAt"];
-    [payload setObject:batch forKey:@"batch"];
+    [payload setObject:batch forKey:@"data"];
 
     SEGLog(@"%@ Flushing %lu of %lu queued API calls.", self, (unsigned long)batch.count, (unsigned long)self.queue.count);
     SEGLog(@"Flushing batch %@.", payload);
 
-    self.batchRequest = [self.httpClient upload:payload forWriteKey:self.configuration.writeKey completionHandler:^(BOOL retry) {
+    self.batchRequest = [self.httpClient upload:payload forWriteKey:[[[SEGAnalytics sharedAnalytics] configuration] getAuthToken] completionHandler:^(BOOL retry) {
         [self dispatchBackground:^{
             if (retry) {
-                [self notifyForName:SEGSegmentRequestDidFailNotification userInfo:batch];
+                [self notifyForName:SEGSegmentPELRequestDidFailNotification userInfo:batch];
                 self.batchRequest = nil;
                 [self endBackgroundTask];
                 return;
@@ -585,13 +604,13 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 
             [self.queue removeObjectsInArray:batch];
             [self persistQueue];
-            [self notifyForName:SEGSegmentRequestDidSucceedNotification userInfo:batch];
+            [self notifyForName:SEGSegmentPELRequestDidSucceedNotification userInfo:batch];
             self.batchRequest = nil;
             [self endBackgroundTask];
         }];
     }];
 
-    [self notifyForName:SEGSegmentDidSendRequestNotification userInfo:batch];
+    [self notifyForName:SEGSegmentPELDidSendRequestNotification userInfo:batch];
 }
 
 - (void)applicationDidEnterBackground
@@ -615,7 +634,7 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 - (NSMutableArray *)queue
 {
     if (!_queue) {
-        _queue = [[self.fileStorage arrayForKey:kSEGQueueFilename] ?: @[] mutableCopy];
+        _queue = [[self.fileStorage arrayForKey:kSEGPELQueueFilename] ?: @[] mutableCopy];
     }
 
     return _queue;
@@ -625,9 +644,9 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 {
     if (!_traits) {
 #if TARGET_OS_TV
-        _traits = [[self.userDefaultsStorage dictionaryForKey:SEGTraitsKey] ?: @{} mutableCopy];
+        _traits = [[self.userDefaultsStorage dictionaryForKey:SEGPELTraitsKey] ?: @{} mutableCopy];
 #else
-        _traits = [[self.fileStorage dictionaryForKey:kSEGTraitsFilename] ?: @{} mutableCopy];
+        _traits = [[self.fileStorage dictionaryForKey:kSEGPELTraitsFilename] ?: @{} mutableCopy];
 #endif
     }
 
@@ -642,18 +661,18 @@ static CTTelephonyNetworkInfo *_telephonyNetworkInfo;
 - (NSString *)getUserId
 {
 #if TARGET_OS_TV
-    return [[NSUserDefaults standardUserDefaults] valueForKey:SEGUserIdKey];
+    return [[NSUserDefaults standardUserDefaults] valueForKey:SEGPELUserIdKey];
 #else
-    return [self.fileStorage stringForKey:kSEGUserIdFilename];
+    return [self.fileStorage stringForKey:kSEGPELUserIdFilename];
 #endif
 }
 
 - (void)persistQueue
 {
-    [self.fileStorage setArray:[self.queue copy] forKey:kSEGQueueFilename];
+    [self.fileStorage setArray:[self.queue copy] forKey:kSEGPELQueueFilename];
 }
 
-NSString *const SEGTrackedAttributionKey = @"SEGTrackedAttributionKey";
+NSString *const SEGPELTrackedAttributionKey = @"SEGPELTrackedAttributionKey";
 
 - (void)trackAttributionData:(BOOL)trackAttributionData
 {
@@ -662,7 +681,7 @@ NSString *const SEGTrackedAttributionKey = @"SEGTrackedAttributionKey";
         return;
     }
 
-    BOOL trackedAttribution = [[NSUserDefaults standardUserDefaults] boolForKey:SEGTrackedAttributionKey];
+    BOOL trackedAttribution = [[NSUserDefaults standardUserDefaults] boolForKey:SEGPELTrackedAttributionKey];
     if (trackedAttribution) {
         return;
     }
@@ -673,11 +692,11 @@ NSString *const SEGTrackedAttributionKey = @"SEGTrackedAttributionKey";
     [context addEntriesFromDictionary:staticContext];
     [context addEntriesFromDictionary:liveContext];
 
-    self.attributionRequest = [self.httpClient attributionWithWriteKey:self.configuration.writeKey forDevice:[context copy] completionHandler:^(BOOL success, NSDictionary *properties) {
+    self.attributionRequest = [self.httpClient attributionWithWriteKey:[[[SEGAnalytics sharedAnalytics] configuration] getAuthToken] forDevice:[context copy] completionHandler:^(BOOL success, NSDictionary *properties) {
         [self dispatchBackground:^{
             if (success) {
                 [self.analytics track:@"Install Attributed" properties:properties];
-                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:SEGTrackedAttributionKey];
+                [[NSUserDefaults standardUserDefaults] setBool:YES forKey:SEGPELTrackedAttributionKey];
             }
             self.attributionRequest = nil;
         }];

@@ -1,7 +1,7 @@
 #import "SEGHTTPClient.h"
 #import "NSData+SEGGZIP.h"
 #import "SEGAnalyticsUtils.h"
-
+#import <CommonCrypto/CommonDigest.h>
 
 @implementation SEGHTTPClient
 
@@ -39,6 +39,8 @@
     return self;
 }
 
+//NSString * authKey = SEGAnalytics.sharedAnalytics.configuration.authDelegate.authenticationKey;
+
 - (NSURLSession *)sessionForWriteKey:(NSString *)writeKey
 {
     NSURLSession *session = self.sessionsByWriteKey[writeKey];
@@ -48,13 +50,44 @@
             @"Accept-Encoding" : @"gzip",
             @"Content-Encoding" : @"gzip",
             @"Content-Type" : @"application/json",
-            @"Authorization" : [@"Basic " stringByAppendingString:[[self class] authorizationHeader:writeKey]],
-            @"User-Agent" : [NSString stringWithFormat:@"analytics-ios/%@", [SEGAnalytics version]],
+            @"User-Agent" : [NSString stringWithFormat:@"analytics@practo-ios/%@", [SEGAnalytics version]],
+            @"pipeline_token": [self pipelineTokenFrom:writeKey],
+            @"auth_prefix": [self authPrefixFrom:writeKey]
         };
         session = [NSURLSession sessionWithConfiguration:config delegate:self.httpSessionDelegate delegateQueue:NULL];
+
+        if (writeKey == nil) {
+            writeKey = @""; //To avoid crash in the next line
+        }
         self.sessionsByWriteKey[writeKey] = session;
     }
     return session;
+}
+
+- (NSString *)pipelineTokenFrom:(NSString *)key {
+    if (key == nil) {
+        return nil;
+    }
+    NSString *keyToHash = [@"events-pipeline" stringByAppendingString:key];
+    const char *str = keyToHash.UTF8String;
+    if (str == NULL) {
+        str = "";
+    }
+    unsigned char result[CC_MD5_DIGEST_LENGTH];
+    CC_MD5(str, (CC_LONG)strlen(str), result);
+    NSString *keyHash = [NSString stringWithFormat:@"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
+                           result[0], result[1], result[2], result[3],
+                           result[4], result[5], result[6], result[7],
+                           result[8], result[9], result[10], result[11],
+                           result[12], result[13], result[14], result[15]];
+    return keyHash;
+}
+
+- (NSString *)authPrefixFrom:(NSString *)key {
+    if (key != nil && key.length > 8) {
+        return [key substringToIndex:8];
+    }
+    return @"";
 }
 
 - (void)dealloc
@@ -71,7 +104,7 @@
     //    batch = SEGCoerceDictionary(batch);
     NSURLSession *session = [self sessionForWriteKey:writeKey];
 
-    NSURL *url = [SEGMENT_API_BASE URLByAppendingPathComponent:@"batch"];
+    NSURL *url = [PEL_API_BASE URLByAppendingPathComponent:@"events"];
     NSMutableURLRequest *request = self.requestFactory(url);
 
     // This is a workaround for an IOS 8.3 bug that causes Content-Type to be incorrectly set
@@ -95,6 +128,7 @@
     }
     NSData *gzippedPayload = [payload seg_gzippedData];
 
+    NSLog([NSString stringWithFormat:@"payload: %@", batch]);
     NSURLSessionUploadTask *task = [session uploadTaskWithRequest:request fromData:gzippedPayload completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response, NSError *_Nullable error) {
         if (error) {
             // Network error. Retry.

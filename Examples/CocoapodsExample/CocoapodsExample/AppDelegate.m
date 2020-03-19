@@ -6,7 +6,7 @@
 //  Copyright © 2016 Segment. All rights reserved.
 //
 
-#import <Analytics/SEGAnalytics.h>
+#import <SEGAnalytics.h>
 #import "AppDelegate.h"
 
 
@@ -29,7 +29,7 @@ NSString *const SEGMENT_WRITE_KEY = @"zr5x22gUVBDM3hO3uHkbMkVe6Pd6sCna";
     configuration.trackAttributionData = YES;
     configuration.flushAt = 1;
     [SEGAnalytics setupWithConfiguration:configuration];
-    [[SEGAnalytics sharedAnalytics] identify:@"Prateek" traits:nil options: @{
+    [[SEGAnalytics sharedAnalytics] identify:@"Sumeet" traits:nil options: @{
                                                                               @"anonymousId":@"test_anonymousId"
                                                                               }];
     [[SEGAnalytics sharedAnalytics] track:@"Cocoapods Example Launched"];

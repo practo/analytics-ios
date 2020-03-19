@@ -9,7 +9,7 @@ Pod::Spec.new do |s|
                        DESC
 
   s.homepage         = "https://github.com/practo/analytics-ios"
-  s.license          =  { :type => 'MIT' }
+  s.license          =  { :type => 'MIT', :file => "LICENSE" }
   s.author           = { "Sumeet Gupta" => "sumeet.gupta@practo.com" }
   s.source           = { :git => "https://github.com/practo/analytics-ios", :tag => s.version.to_s }
 
