@@ -25,6 +25,13 @@ typedef NSMutableURLRequest *_Nonnull (^SEGRequestFactory)(NSURL *_Nonnull);
 @protocol SEGCrypto;
 @protocol SEGMiddleware;
 
+@protocol SEGAuthenticationProtocol <NSObject>
+
+/** The key for which this factory can create an Integration. */
+- (NSString *)authenticationKey;
+
+@end
+
 /**
  * This object provides a set of properties to control various policies of the analytics client. Other than `writeKey`, these properties can be changed at any time.
  */
@@ -43,6 +50,8 @@ typedef NSMutableURLRequest *_Nonnull (^SEGRequestFactory)(NSURL *_Nonnull);
  * @see +configurationWithWriteKey:
  */
 @property (nonatomic, copy, readonly, nonnull) NSString *writeKey;
+
+@property (nonatomic, assign) id<SEGAuthenticationProtocol> authDelegate;
 
 /**
  * Whether the analytics client should use location services.
@@ -170,5 +179,7 @@ typedef NSMutableURLRequest *_Nonnull (^SEGRequestFactory)(NSURL *_Nonnull);
  * An optional delegate that handles NSURLSessionDelegate callbacks
  */
 @property (nonatomic, strong, nullable) id<NSURLSessionDelegate> httpSessionDelegate;
+
+- (NSString *)getAuthToken;
 
 @end

@@ -72,6 +72,10 @@
     return self;
 }
 
+- (NSString *)getAuthToken {
+    return self.authDelegate.authenticationKey;
+}
+
 - (void)use:(id<SEGIntegrationFactory>)factory
 {
     [self.factories addObject:factory];
