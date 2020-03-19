@@ -39,6 +39,8 @@
     return self;
 }
 
+//NSString * authKey = SEGAnalytics.sharedAnalytics.configuration.authDelegate.authenticationKey;
+
 - (NSURLSession *)sessionForWriteKey:(NSString *)writeKey
 {
     NSURLSession *session = self.sessionsByWriteKey[writeKey];
@@ -53,12 +55,19 @@
             @"auth_prefix": [self authPrefixFrom:writeKey]
         };
         session = [NSURLSession sessionWithConfiguration:config delegate:self.httpSessionDelegate delegateQueue:NULL];
+
+        if (writeKey == nil) {
+            writeKey = @""; //To avoid crash in the next line
+        }
         self.sessionsByWriteKey[writeKey] = session;
     }
     return session;
 }
 
 - (NSString *)pipelineTokenFrom:(NSString *)key {
+    if (key == nil) {
+        return nil;
+    }
     NSString *keyToHash = [@"events-pipeline" stringByAppendingString:key];
     const char *str = keyToHash.UTF8String;
     if (str == NULL) {
@@ -119,6 +128,7 @@
     }
     NSData *gzippedPayload = [payload seg_gzippedData];
 
+    NSLog([NSString stringWithFormat:@"payload: %@", batch]);
     NSURLSessionUploadTask *task = [session uploadTaskWithRequest:request fromData:gzippedPayload completionHandler:^(NSData *_Nullable data, NSURLResponse *_Nullable response, NSError *_Nullable error) {
         if (error) {
             // Network error. Retry.
